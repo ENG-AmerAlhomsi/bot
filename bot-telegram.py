@@ -70,8 +70,7 @@ async def start(update: Update, context):
 # خطوات جمع البيانات
 async def get_name(update: Update, context):
     context.user_data['name'] = update.message.text
-    await update.message.reply_text("2-يرجى إدخال رقم هاتفك:\n"
-                                    "للعودة الى البداية /cancel")
+    await update.message.reply_text("2-يرجى إدخال رقم هاتفك:\n" "/cancel")
     return PHONE
 
 async def get_phone(update: Update, context):
@@ -80,26 +79,26 @@ async def get_phone(update: Update, context):
         await update.message.reply_text("يرجى إدخال رقم هاتف صحيح يحتوي على أرقام فقط (10 أرقام فقط).")
         return PHONE
     context.user_data['phone'] = phone
-    await update.message.reply_text("3-يرجى إدخال اسم المنتج الذي ترغب بشرائه مع كامل التفاصيل مثلاً (اللون أو الحجم أو الماركة):")
+    await update.message.reply_text("3-يرجى إدخال اسم المنتج الذي ترغب بشرائه مع كامل التفاصيل مثلاً (اللون أو الحجم أو الماركة):\n" "/cancel")
     return PRODUCT
 
 async def get_product(update: Update, context):
     context.user_data['product'] = update.message.text
-    await update.message.reply_text("4-يرجى إدخال اسم المتجر الذي ترغب بالشراء منه. في حال لا يوجد متجر معين، يرجى كتابة ((غير محدد)):")
+    await update.message.reply_text("4-يرجى إدخال اسم المتجر الذي ترغب بالشراء منه. في حال لا يوجد متجر معين، يرجى كتابة ((غير محدد)):\n" "/cancel")
     return STORE
 
 async def get_store(update: Update, context):
     context.user_data['store'] = update.message.text
     reply_keyboard = [["كاش", "تقسيط 3 أشهر", "تقسيط 6 أشهر"]]
     await update.message.reply_text(
-        "5-يرجى اختيار نوع الدفع:",
+        "5-يرجى اختيار نوع الدفع:\n" "/cancel",
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     )
     return PAYMENT
 
 async def get_payment(update: Update, context):
     context.user_data['payment'] = update.message.text
-    await update.message.reply_text("6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):")
+    await update.message.reply_text("6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):\n" "/cancel")
     return REFERRAL
 
 async def get_referral(update: Update, context):
