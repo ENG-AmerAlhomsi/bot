@@ -222,6 +222,10 @@ async def handle_correction_value(update: Update, context):
     )
     return await review_data(update, context)
 
+async def cancel_conversation(update: Update, context):
+    await update.message.reply_text("تم إلغاء العملية. يمكنك إعادة البدء بكتابة /start في أي وقت.")
+    return ConversationHandler.END
+
 # إعداد التطبيق
 def main():
     setup_database()
@@ -241,13 +245,16 @@ def main():
 
             CORRECTION_FIELD: [
                 MessageHandler(filters.Regex('^(الاسم|رقم الهاتف|اسم المنتج|اسم المتجر|نوع الدفع|الشخص الذي عرفك بالشركة)$'), 
-                               handle_correction_field)
+                                handle_correction_field)
             ],
             CORRECTION_VALUE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_correction_value)
             ]
         },
-        fallbacks=[CommandHandler("cancel", lambda u, c: u.message.reply_text("تم إلغاء العملية."))]
+    fallbacks=[
+        CommandHandler("cancel", cancel_conversation),
+        MessageHandler(filters.Regex("^خروج$"), cancel_conversation)
+]
     )
 
     application.add_handler(conv_handler)
