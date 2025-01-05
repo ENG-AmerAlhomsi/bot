@@ -98,7 +98,7 @@ async def get_store(update: Update, context):
 
 async def get_payment(update: Update, context):
     context.user_data['payment'] = update.message.text
-    await update.message.reply_text("6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):\n" "/cancel")
+    await update.message.reply_text("6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):\n" "[العودة الى البداية](https:/cancel)")
     return REFERRAL
 
 async def get_referral(update: Update, context):
