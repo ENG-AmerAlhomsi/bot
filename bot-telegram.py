@@ -71,7 +71,7 @@ async def start(update: Update, context):
 async def get_name(update: Update, context):
     context.user_data['name'] = update.message.text
     await update.message.reply_text("2-يرجى إدخال رقم هاتفك:\n"
-                                    "للعودة الى البداية \cancel")
+                                    "للعودة الى البداية cancel/")
     return PHONE
 
 async def get_phone(update: Update, context):
