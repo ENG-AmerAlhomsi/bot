@@ -1,6 +1,6 @@
 import re
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, ContextTypes
 from dotenv import load_dotenv
 import os
 import sqlite3
@@ -47,12 +47,26 @@ def save_order(name, phone, product, store, payment, referral, marketer_name):
     conn.commit()
     conn.close()
 
+# دالة timeout 
+async def timeout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message:
+        await update.message.reply_text(
+            "انتهت مهلة الجلسة لعدم التفاعل.\nإذا أردت البدء مجددًا، اكتب /start"
+        )
+    else:
+        chat_id = update.effective_chat.id if update.effective_chat else None
+        if chat_id:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="انتهت مهلة الجلسة لعدم التفاعل.\nاكتب /start لبدء محادثة جديدة."
+            )
+    return ConversationHandler.END
+
 # بدء المحادثة
 async def start(update: Update, context):
-    args = context.args  # هذه قائمة تضم المعاملات المرفقة مع /start
+    args = context.args
     if args:
-        marketer_code = args[0]  # الرقم الفريد للمسوق (مثل "2425")
-        # نحاول إيجاد اسم المسوق في القاموس
+        marketer_code = args[0]
         marketer_name = MARKETERS.get(marketer_code, "unknown")
         context.user_data['marketer_name'] = marketer_name
     else:
@@ -68,10 +82,9 @@ async def start(update: Update, context):
     await update.message.reply_text(message)
     return NAME
 
-# خطوات جمع البيانات
 async def get_name(update: Update, context):
     context.user_data['name'] = update.message.text
-    await update.message.reply_text("2-يرجى إدخال رقم هاتفك:\n" "/cancel")
+    await update.message.reply_text("2-يرجى إدخال رقم هاتفك:\n/cancel")
     return PHONE
 
 async def get_phone(update: Update, context):
@@ -80,26 +93,28 @@ async def get_phone(update: Update, context):
         await update.message.reply_text("يرجى إدخال رقم هاتف صحيح يحتوي على أرقام فقط (10 أرقام فقط).")
         return PHONE
     context.user_data['phone'] = phone
-    await update.message.reply_text("3-يرجى إدخال اسم المنتج الذي ترغب بشرائه مع كامل التفاصيل مثلاً (اللون أو الحجم أو الماركة):\n" "/cancel")
+    await update.message.reply_text("3-يرجى إدخال اسم المنتج الذي ترغب بشرائه مع كامل التفاصيل مثلاً (اللون أو الحجم أو الماركة):\n/cancel")
     return PRODUCT
 
 async def get_product(update: Update, context):
     context.user_data['product'] = update.message.text
-    await update.message.reply_text("4-يرجى إدخال اسم المتجر الذي ترغب بالشراء منه. في حال لا يوجد متجر معين، يرجى كتابة ((غير محدد)):\n" "/cancel")
+    await update.message.reply_text("4-يرجى إدخال اسم المتجر الذي ترغب بالشراء منه. في حال لا يوجد متجر معين، يرجى كتابة ((غير محدد)):\n/cancel")
     return STORE
 
 async def get_store(update: Update, context):
     context.user_data['store'] = update.message.text
     reply_keyboard = [["كاش", "تقسيط 3 أشهر", "تقسيط 6 أشهر"]]
     await update.message.reply_text(
-        "5-يرجى اختيار نوع الدفع:\n" "/cancel",
+        "5-يرجى اختيار نوع الدفع:\n/cancel",
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     )
     return PAYMENT
 
 async def get_payment(update: Update, context):
     context.user_data['payment'] = update.message.text
-    await update.message.reply_text("6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):\n" "/cancel")
+    await update.message.reply_text(
+        "6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):\n/cancel"
+    )
     return REFERRAL
 
 async def get_referral(update: Update, context):
@@ -107,7 +122,6 @@ async def get_referral(update: Update, context):
     await update.message.reply_text("شكرًا لك. الآن سيتم عرض البيانات للتأكد من صحتها.")
     return await review_data(update, context)
 
-# مراجعة البيانات
 async def review_data(update: Update, context):
     user_data = context.user_data
     summary = (
@@ -128,18 +142,18 @@ async def handle_review(update: Update, context):
     if update.message.text == "نعم":
         user_data = context.user_data
         save_order(
-            user_data['name'], 
-            user_data['phone'], 
-            user_data['product'], 
-            user_data['store'], 
-            user_data['payment'], 
+            user_data['name'],
+            user_data['phone'],
+            user_data['product'],
+            user_data['store'],
+            user_data['payment'],
             user_data['referral'],
             user_data.get('marketer_name', 'unknown')
         )
 
         # أرسل معلومات الطلب للإدمن كنص
         await context.bot.send_message(
-            chat_id=ADMIN_ID, 
+            chat_id=ADMIN_ID,
             text=(
                 "طلب جديد وصل!\n\n"
                 f"الاسم: {user_data['name']}\n"
@@ -147,7 +161,7 @@ async def handle_review(update: Update, context):
                 f"اسم المنتج: {user_data['product']}\n"
                 f"اسم المتجر: {user_data['store']}\n"
                 f"نوع الدفع: {user_data['payment']}\n"
-                f"الشخص الذي عرفه بالشركة: {user_data['referral']}\n"
+                f"الشخص الذي عرفك بالشركة: {user_data['referral']}\n"
                 f"المسوِّق الذي جلب الزبون: {user_data.get('marketer_name', 'غير معروف')}"
             )
         )
@@ -162,16 +176,16 @@ async def handle_review(update: Update, context):
 
     elif update.message.text == "لا":
         reply_keyboard = [
-    ["الاسم", "رقم الهاتف"],
-    ["اسم المنتج", "اسم المتجر"],
-    ["نوع الدفع", "الشخص الذي عرفك بالشركة"]]
+            ["الاسم", "رقم الهاتف"],
+            ["اسم المنتج", "اسم المتجر"],
+            ["نوع الدفع", "الشخص الذي عرفك بالشركة"]
+        ]
         await update.message.reply_text(
-            "يرجى اختيار البيانات التي تريد تعديلها:", 
+            "يرجى اختيار البيانات التي تريد تعديلها:",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
         )
         return CORRECTION_FIELD
 
-# تعديل البيانات
 async def handle_correction_field(update: Update, context):
     field_to_edit = update.message.text
     context.user_data['field_to_edit'] = field_to_edit
@@ -216,7 +230,6 @@ async def handle_correction_value(update: Update, context):
         await update.message.reply_text("خطأ: لم يتم التعرف على الحقل.")
         return CORRECTION_FIELD
 
-    # بعد تحديث القيمة، نعطي رسالة نجاح ونعود للمراجعة
     await update.message.reply_text(
         f"تم تحديث {field} بنجاح.",
         reply_markup=ReplyKeyboardRemove()
@@ -227,7 +240,6 @@ async def cancel_conversation(update: Update, context):
     await update.message.reply_text("تم إلغاء العملية. يمكنك إعادة البدء بكتابة /start في أي وقت.")
     return ConversationHandler.END
 
-# إعداد التطبيق
 def main():
     setup_database()
     application = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -245,17 +257,23 @@ def main():
             REVIEW: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_review)],
 
             CORRECTION_FIELD: [
-                MessageHandler(filters.Regex('^(الاسم|رقم الهاتف|اسم المنتج|اسم المتجر|نوع الدفع|الشخص الذي عرفك بالشركة)$'), 
-                                handle_correction_field)
+                MessageHandler(filters.Regex('^(الاسم|رقم الهاتف|اسم المنتج|اسم المتجر|نوع الدفع|الشخص الذي عرفك بالشركة)$'),
+                            handle_correction_field)
             ],
             CORRECTION_VALUE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_correction_value)
+            ],
+
+            # حالة انقضاء المهلة (اختيارية)
+            ConversationHandler.TIMEOUT: [
+                MessageHandler(filters.ALL, timeout_callback)
             ]
         },
-    fallbacks=[
-        CommandHandler("cancel", cancel_conversation),
-        MessageHandler(filters.Regex("^خروج$"), cancel_conversation)
-]
+        fallbacks=[
+            CommandHandler("cancel", cancel_conversation),
+            MessageHandler(filters.Regex("^خروج$"), cancel_conversation)
+        ],
+        conversation_timeout=900  # 900 ثانية (15 دقيقة)
     )
 
     application.add_handler(conv_handler)
