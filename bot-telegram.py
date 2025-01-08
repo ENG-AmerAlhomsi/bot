@@ -76,15 +76,14 @@ async def start(update: Update, context):
         "(لبيع وتقسيط المنتجات).\n"
         "أمامك 6 خطوات لإتمام الطلب...\n\n"
         "لنبدأ!\n"
-        "1-يرجى إدخال الاسم الثلاثي:\n"
-        "/cancel"
+        "1-يرجى إدخال الاسم الثلاثي:"
     )
     await update.message.reply_text(message)
     return NAME
 
 async def get_name(update: Update, context):
     context.user_data['name'] = update.message.text
-    await update.message.reply_text("2-يرجى إدخال رقم هاتفك:\n/cancel")
+    await update.message.reply_text("2-يرجى إدخال رقم هاتفك:")
     return PHONE
 
 async def get_phone(update: Update, context):
@@ -93,19 +92,19 @@ async def get_phone(update: Update, context):
         await update.message.reply_text("يرجى إدخال رقم هاتف صحيح يحتوي على أرقام فقط (10 أرقام فقط).")
         return PHONE
     context.user_data['phone'] = phone
-    await update.message.reply_text("3-يرجى إدخال اسم المنتج الذي ترغب بشرائه مع كامل التفاصيل مثلاً (اللون أو الحجم أو الماركة):\n/cancel")
+    await update.message.reply_text("3-يرجى إدخال اسم المنتج الذي ترغب بشرائه مع كامل التفاصيل مثلاً (اللون أو الحجم أو الماركة):")
     return PRODUCT
 
 async def get_product(update: Update, context):
     context.user_data['product'] = update.message.text
-    await update.message.reply_text("4-يرجى إدخال اسم المتجر الذي ترغب بالشراء منه. في حال لا يوجد متجر معين، يرجى كتابة ((غير محدد)):\n/cancel")
+    await update.message.reply_text("4-يرجى إدخال اسم المتجر الذي ترغب بالشراء منه. في حال لا يوجد متجر معين، يرجى كتابة ((غير محدد)):")
     return STORE
 
 async def get_store(update: Update, context):
     context.user_data['store'] = update.message.text
     reply_keyboard = [["كاش", "تقسيط 3 أشهر", "تقسيط 6 أشهر"]]
     await update.message.reply_text(
-        "5-يرجى اختيار نوع الدفع:\n/cancel",
+        "5-يرجى اختيار نوع الدفع:",
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     )
     return PAYMENT
@@ -113,7 +112,7 @@ async def get_store(update: Update, context):
 async def get_payment(update: Update, context):
     context.user_data['payment'] = update.message.text
     await update.message.reply_text(
-        "6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):\n/cancel"
+        "6-هل من الممكن اخبارنا بطريقة معرفتك بخدمتنا؟ في حال لا يوجد شخص معين يرجى كتابة ((غير محدد)):"
     )
     return REFERRAL
 
@@ -273,7 +272,7 @@ def main():
             CommandHandler("cancel", cancel_conversation),
             MessageHandler(filters.Regex("^خروج$"), cancel_conversation)
         ],
-        conversation_timeout=30  # 900 ثانية (15 دقيقة)
+        conversation_timeout=900  # 900 ثانية (15 دقيقة)
     )
 
     application.add_handler(conv_handler)
