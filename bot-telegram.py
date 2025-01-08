@@ -273,7 +273,7 @@ def main():
             CommandHandler("cancel", cancel_conversation),
             MessageHandler(filters.Regex("^خروج$"), cancel_conversation)
         ],
-        conversation_timeout=900  # 900 ثانية (15 دقيقة)
+        conversation_timeout=30  # 900 ثانية (15 دقيقة)
     )
 
     application.add_handler(conv_handler)
